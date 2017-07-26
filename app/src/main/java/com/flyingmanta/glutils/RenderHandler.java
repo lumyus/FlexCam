@@ -49,8 +49,7 @@ public final class RenderHandler implements Runnable {
 	private boolean mRequestSetEglContext;
 	private boolean mRequestRelease;
 	private int mRequestDraw;
-    //********************************************************************************
-//********************************************************************************
+
     private EGLBase mEgl;
     private EGLBase.EglSurface mInputSurface;
     private GLDrawer2D mDrawer;
