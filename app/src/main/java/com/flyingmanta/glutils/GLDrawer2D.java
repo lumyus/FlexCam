@@ -1,6 +1,6 @@
 package com.flyingmanta.glutils;
 /*
- * AudioVideoRecordingSample
+ * FlexCam
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
  *
  * Copyright (c) 2014-2015 saki t_saki@serenegiant.com
@@ -23,14 +23,14 @@ package com.flyingmanta.glutils;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 
 /**
  * Helper class to draw to whole view using specific texture and texture matrix
@@ -60,19 +60,17 @@ public class GLDrawer2D {
 		+ "}";
 	private static final float[] VERTICES = { 1.0f, 1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, -1.0f };
 	private static final float[] TEXCOORD = { 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
-
-	private final FloatBuffer pVertex;
-	private final FloatBuffer pTexCoord;
-	private int hProgram;
-    int maPositionLoc;
-    int maTextureCoordLoc;
-    int muMVPMatrixLoc;
-    int muTexMatrixLoc;
-	private final float[] mMvpMatrix = new float[16];
-
 	private static final int FLOAT_SZ = Float.SIZE / 8;
 	private static final int VERTEX_NUM = 4;
 	private static final int VERTEX_SZ = VERTEX_NUM * 2;
+	private final FloatBuffer pVertex;
+	private final FloatBuffer pTexCoord;
+	private final float[] mMvpMatrix = new float[16];
+	int maPositionLoc;
+	int maTextureCoordLoc;
+    int muMVPMatrixLoc;
+    int muTexMatrixLoc;
+	private int hProgram;
 	/**
 	 * Constructor
 	 * this should be called in GL context
@@ -103,44 +101,6 @@ public class GLDrawer2D {
 		GLES20.glEnableVertexAttribArray(maTextureCoordLoc);
 	}
 
-	/**
-	 * terminatinng, this should be called in GL context
-	 */
-	public void release() {
-		if (hProgram >= 0)
-			GLES20.glDeleteProgram(hProgram);
-		hProgram = -1;
-	}
-
-	/**
-	 * draw specific texture with specific texture matrix
-	 * @param tex_id texture ID
-	 * @param tex_matrix texture matrix、if this is null, the last one use(we don't check size of this array and needs at least 16 of float)
-	 */
-	public void draw(final int tex_id, final float[] tex_matrix) {
-		GLES20.glUseProgram(hProgram);
-		if (tex_matrix != null)
-			GLES20.glUniformMatrix4fv(muTexMatrixLoc, 1, false, tex_matrix, 0);
-        GLES20.glUniformMatrix4fv(muMVPMatrixLoc, 1, false, mMvpMatrix, 0);
-		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-		GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, tex_id);
-		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_NUM);
-		GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
-        GLES20.glUseProgram(0);
-	}
-
-	/**
-	 * Set model/view/projection transform matrix
-	 * @param matrix
-	 * @param offset
-	 */
-	public void setMatrix(final float[] matrix, final int offset) {
-		if ((matrix != null) && (matrix.length >= offset + 16)) {
-			System.arraycopy(matrix, offset, mMvpMatrix, 0, 16);
-		} else {
-			Matrix.setIdentityM(mMvpMatrix, 0);
-		}
-	}
 	/**
 	 * create external texture
 	 * @return texture ID
@@ -207,6 +167,47 @@ public class GLDrawer2D {
 		GLES20.glLinkProgram(program);
 
 		return program;
+	}
+
+	/**
+	 * terminatinng, this should be called in GL context
+	 */
+	public void release() {
+		if (hProgram >= 0)
+			GLES20.glDeleteProgram(hProgram);
+		hProgram = -1;
+	}
+
+	/**
+	 * draw specific texture with specific texture matrix
+	 *
+	 * @param tex_id     texture ID
+	 * @param tex_matrix texture matrix、if this is null, the last one use(we don't check size of this array and needs at least 16 of float)
+	 */
+	public void draw(final int tex_id, final float[] tex_matrix) {
+		GLES20.glUseProgram(hProgram);
+		if (tex_matrix != null)
+			GLES20.glUniformMatrix4fv(muTexMatrixLoc, 1, false, tex_matrix, 0);
+		GLES20.glUniformMatrix4fv(muMVPMatrixLoc, 1, false, mMvpMatrix, 0);
+		GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+		GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, tex_id);
+		GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, VERTEX_NUM);
+		GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
+		GLES20.glUseProgram(0);
+	}
+
+	/**
+	 * Set model/view/projection transform matrix
+	 *
+	 * @param matrix
+	 * @param offset
+	 */
+	public void setMatrix(final float[] matrix, final int offset) {
+		if ((matrix != null) && (matrix.length >= offset + 16)) {
+			System.arraycopy(matrix, offset, mMvpMatrix, 0, 16);
+		} else {
+			Matrix.setIdentityM(mMvpMatrix, 0);
+		}
 	}
 
 }

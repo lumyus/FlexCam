@@ -1,6 +1,6 @@
 package com.flyingmanta.encoder;
 /*
- * AudioVideoRecordingSample
+ * FlexCam
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
  *
   * Copyright (c) 2014-2015 saki t_saki@serenegiant.com
@@ -23,36 +23,30 @@ package com.flyingmanta.encoder;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.nio.ByteBuffer;
-
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.util.Log;
 
-public abstract class MediaEncoder implements Runnable {
-	private static final boolean DEBUG = false;	// TODO set false on release
-	private static final String TAG = "MediaEncoder";
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
 
-	protected static final int TIMEOUT_USEC = 10000;	// 10[msec]
+public abstract class MediaEncoder implements Runnable {
+	protected static final int TIMEOUT_USEC = 10000;    // 10[msec]
 	protected static final int MSG_FRAME_AVAILABLE = 1;
 	protected static final int MSG_STOP_RECORDING = 9;
-
-	public interface MediaEncoderListener {
-		public void onPrepared(MediaEncoder encoder);
-		public void onStopped(MediaEncoder encoder);
-	}
-
+	private static final boolean DEBUG = false;    // TODO set false on release
+	private static final String TAG = "MediaEncoder";
 	protected final Object mSync = new Object();
+	/**
+	 * Weak refarence of MediaMuxerWarapper instance
+	 */
+	protected final WeakReference<MediaMuxerWrapper> mWeakMuxer;
+	protected final MediaEncoderListener mListener;
 	/**
 	 * Flag that indicate this encoder is capturing now.
 	 */
     protected volatile boolean mIsCapturing;
-	/**
-	 * Flag that indicate the frame data will be available soon.
-	 */
-	private int mRequestDrain;
     /**
      * Flag to request stop capturing
      */
@@ -74,15 +68,17 @@ public abstract class MediaEncoder implements Runnable {
      */
     protected MediaCodec mMediaCodec;				// API >= 16(Android4.1.2)
     /**
-     * Weak refarence of MediaMuxerWarapper instance
-     */
-    protected final WeakReference<MediaMuxerWrapper> mWeakMuxer;
-    /**
+	 * Flag that indicate the frame data will be available soon.
+	 */
+	private int mRequestDrain;
+	/**
      * BufferInfo instance for dequeuing
      */
     private MediaCodec.BufferInfo mBufferInfo;		// API >= 16(Android4.1.2)
-
-    protected final MediaEncoderListener mListener;
+	/**
+	 * previous presentationTimeUs for writing
+	 */
+	private long prevOutputPTSUs = 0;
 
     public MediaEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener) {
     	if (listener == null) throw new NullPointerException("MediaEncoderListener is null");
@@ -378,10 +374,6 @@ LOOP:	while (mIsCapturing) {
         }
     }
 
-    /**
-     * previous presentationTimeUs for writing
-     */
-	private long prevOutputPTSUs = 0;
 	/**
 	 * get next encoding presentationTimeUs
 	 * @return
@@ -393,6 +385,12 @@ LOOP:	while (mIsCapturing) {
 		if (result < prevOutputPTSUs)
 			result = (prevOutputPTSUs - result) + result;
 		return result;
-    }
+	}
+
+	public interface MediaEncoderListener {
+		public void onPrepared(MediaEncoder encoder);
+
+		public void onStopped(MediaEncoder encoder);
+	}
 
 }
