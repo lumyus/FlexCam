@@ -28,9 +28,9 @@
     android:id="@+id/RelativeLayout1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.serenegiant.audiovideosample.CameraFragment" >
+	tools:context="com.flyingmanta.flexcam.CameraFragment">
 
-	<com.serenegiant.audiovideosample.CameraGLView
+	<com.flyingmanta.flexcam.CameraGLView
 		android:id="@+id/cameraView"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"

@@ -1,4 +1,4 @@
-package com.serenegiant.encoder;
+package com.flyingmanta.encoder;
 /*
  * AudioVideoRecordingSample
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
@@ -33,7 +33,7 @@ import android.opengl.EGLContext;
 import android.util.Log;
 import android.view.Surface;
 
-import com.serenegiant.glutils.RenderHandler;
+import com.flyingmanta.glutils.RenderHandler;
 
 public class MediaVideoEncoder extends MediaEncoder {
 	private static final boolean DEBUG = false;	// TODO set false on release
