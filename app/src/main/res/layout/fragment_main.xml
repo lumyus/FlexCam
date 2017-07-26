@@ -55,4 +55,13 @@
 		android:layout_centerVertical="true"
 		android:text="Merge" />
 
+	<Button
+		android:id="@+id/camera_button"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_alignParentTop="true"
+		android:layout_alignStart="@+id/record_button"
+		android:layout_marginTop="27dp"
+		android:text="Camera" />
+
 </RelativeLayout>

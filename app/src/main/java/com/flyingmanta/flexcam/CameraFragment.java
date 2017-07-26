@@ -96,7 +96,14 @@ public class CameraFragment extends Fragment {
 
     private Button mMergeButton;
     private MediaMuxerWrapper mMuxer;
-    private String OUTPUT_FILENAME = "Merged.mp4";
+    private String OUTPUT_FILENAME = "MergedFinal.mp4";
+
+    private Button mCameraButton;
+
+    int cameraId = 1;
+
+    View rootView;
+
     /**
      * method when touch record button
      */
@@ -105,8 +112,15 @@ public class CameraFragment extends Fragment {
         public void onClick(final View view) {
             switch (view.getId()) {
                 case R.id.merge_button:
-                    File mergedFile = new File(Environment.getExternalStorageDirectory(), OUTPUT_FILENAME);
-                    mergeVideo(parts, mergedFile);
+                    if(!parts.isEmpty()){
+                        File mergedFile = new File(Environment.getExternalStorageDirectory(), OUTPUT_FILENAME);
+                        mergeVideo(parts, mergedFile);
+                    }
+                    break;
+                case R.id.camera_button:
+                    mCameraView.resetPreview(cameraId);
+                    if(cameraId == 0) cameraId = 1;
+                    else if(cameraId == 1) cameraId = 0;
                     break;
                 case R.id.record_button:
                     if (mMuxer == null)
@@ -124,9 +138,10 @@ public class CameraFragment extends Fragment {
 
     @Override
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
-        final View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        rootView = inflater.inflate(R.layout.fragment_main, container, false);
         mCameraView = (CameraGLView) rootView.findViewById(R.id.cameraView);
         mCameraView.setVideoSize(MAX_HEIGHT, MAX_WIDTH);
+
         mCameraView.setOnClickListener(mOnClickListener);
 
         mRecordButton = (ImageButton) rootView.findViewById(R.id.record_button);
@@ -134,6 +149,9 @@ public class CameraFragment extends Fragment {
 
         mMergeButton = (Button) rootView.findViewById(R.id.merge_button);
         mMergeButton.setOnClickListener(mOnClickListener);
+
+        mCameraButton = (Button) rootView.findViewById(R.id.camera_button);
+        mCameraButton.setOnClickListener(mOnClickListener);
 
         parts = new ArrayList<>();
 

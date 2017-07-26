@@ -63,7 +63,7 @@ public final class CameraGLView extends GLSurfaceView {
 	private static final int MAX_HEIGHT = 1920;
 	private static final int MAX_WIDTH = 1080;
 
-	private static final int CAMERA_ID = 0;
+	static private int mCameraId = 0;
 
 
 	private final CameraSurfaceRenderer mRenderer;
@@ -100,7 +100,7 @@ public final class CameraGLView extends GLSurfaceView {
 		if (mHasSurface) {
 			if (mCameraHandler == null) {
 				if (DEBUG) Log.v(TAG, "surface already exist");
-				startPreview(getWidth(),  getHeight());
+				startPreview();
 			}
 		}
 	}
@@ -131,6 +131,14 @@ public final class CameraGLView extends GLSurfaceView {
 		});
 	}
 
+	public static int getmCameraId() {
+		return mCameraId;
+	}
+
+	public static void setCameraId(int mCameraId) {
+		CameraGLView.mCameraId = mCameraId;
+	}
+
 	public int getVideoWidth() {
 		return mVideoWidth;
 	}
@@ -142,6 +150,12 @@ public final class CameraGLView extends GLSurfaceView {
 	public SurfaceTexture getSurfaceTexture() {
 		if (DEBUG) Log.v(TAG, "getSurfaceTexture:");
 		return mRenderer != null ? mRenderer.mSTexture : null;
+	}
+
+	public void resetPreview(int mCameraId) {
+		CameraGLView.mCameraId = mCameraId;
+		stopPreview();
+		startPreview();
 	}
 
 	@Override
@@ -175,13 +189,22 @@ public final class CameraGLView extends GLSurfaceView {
 
 //********************************************************************************
 //********************************************************************************
-	private synchronized void startPreview(final int width, final int height) {
+	private synchronized void startPreview() {
 		if (mCameraHandler == null) {
 			final CameraThread thread = new CameraThread(this);
 			thread.start();
 			mCameraHandler = thread.getHandler();
 		}
 		mCameraHandler.startPreview(MAX_HEIGHT, MAX_WIDTH /*width, height*/);
+	}
+
+	private synchronized void stopPreview() {
+		if (DEBUG) Log.v(TAG, "surfaceDestroyed:");
+		if (mCameraHandler != null) {
+			// wait for finish previewing here
+			// otherwise camera try to display on un-exist Surface and some error will occure
+			mCameraHandler.stopPreview(true);
+		}
 	}
 
 	/**
@@ -239,7 +262,7 @@ public final class CameraGLView extends GLSurfaceView {
 			updateViewport();
 			final CameraGLView parent = mWeakParent.get();
 			if (parent != null) {
-				parent.startPreview(width, height);
+				parent.startPreview();
 			}
 		}
 
@@ -374,6 +397,8 @@ public final class CameraGLView extends GLSurfaceView {
 		}
 	}
 
+
+
 	/**
 	 * Thread for asynchronous operation of camera preview
 	 */
@@ -385,7 +410,8 @@ public final class CameraGLView extends GLSurfaceView {
 		private Camera mCamera;
 		private boolean mIsFrontFace;
 
-    	public CameraThread(final CameraGLView parent) {
+
+		public CameraThread(final CameraGLView parent) {
 			super("Camera thread");
     		mWeakParent = new WeakReference<CameraGLView>(parent);
     	}
@@ -448,7 +474,7 @@ public final class CameraGLView extends GLSurfaceView {
 				// This is a sample project so just use 0 as camera ID.
 				// it is better to selecting camera is available
 				try {
-					mCamera = Camera.open(CAMERA_ID);
+					mCamera = Camera.open(mCameraId);
 					final Camera.Parameters params = mCamera.getParameters();
 					final List<String> focusModes = params.getSupportedFocusModes();
 					if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
@@ -552,7 +578,7 @@ public final class CameraGLView extends GLSurfaceView {
 			// get whether the camera is front camera or back camera
 			final Camera.CameraInfo info =
 					new android.hardware.Camera.CameraInfo();
-				android.hardware.Camera.getCameraInfo(CAMERA_ID, info);
+				android.hardware.Camera.getCameraInfo(mCameraId, info);
 			mIsFrontFace = (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT);
 			if (mIsFrontFace) {	// front camera
 				degrees = (info.orientation + degrees) % 360;
