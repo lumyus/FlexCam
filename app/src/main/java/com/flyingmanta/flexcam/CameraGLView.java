@@ -65,6 +65,10 @@ public final class CameraGLView extends GLSurfaceView {
 
 	static private int mCameraId = 0;
 
+	private static final int SCALE_CROP_CENTER = 3;
+
+	private int mScaleMode = SCALE_CROP_CENTER;
+
 
 	private final CameraSurfaceRenderer mRenderer;
 	private boolean mHasSurface;
@@ -295,6 +299,17 @@ public final class CameraGLView extends GLSurfaceView {
 				Matrix.setIdentityM(mMvpMatrix, 0);
 				final double view_aspect = view_width / (double)view_height;
 				Log.i(TAG, String.format("view(%d,%d)%f,video(%1.0f,%1.0f)", view_width, view_height, view_aspect, video_width, video_height));
+
+				final double scale_x = view_width / video_width;
+				final double scale_y = view_height / video_height;
+				final double scale = (parent.mScaleMode == SCALE_CROP_CENTER
+						? Math.max(scale_x,  scale_y) : Math.min(scale_x, scale_y));
+				final double width = scale * video_width;
+				final double height = scale * video_height;
+				Log.v(TAG, String.format("size(%1.0f,%1.0f),scale(%f,%f),mat(%f,%f)",
+						width, height, scale_x, scale_y, width / view_width, height / view_height));
+				Matrix.scaleM(mMvpMatrix, 0, (float)(width / view_width), (float)(height / view_height), 1.0f);
+
 
 				if (mDrawer != null)
 					mDrawer.setMatrix(mMvpMatrix, 0);
