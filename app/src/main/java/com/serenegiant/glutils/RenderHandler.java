@@ -4,6 +4,7 @@ package com.serenegiant.glutils;
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
  *
  * Copyright (c) 2014-2015 saki t_saki@serenegiant.com
+ * Copyright (c) 2017 Cédric Portmann cedric.portmann@gmail.com
  *
  * File name: RenderHandler.java
  *
