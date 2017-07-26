@@ -60,8 +60,8 @@ public final class CameraGLView extends GLSurfaceView {
 	private static final boolean DEBUG = false; // TODO set false on release
 	private static final String TAG = "CameraGLView";
 
-	private static final int MAX_HEIGHT = 1920;
-	private static final int MAX_WIDTH = 1080;
+	private static final int MAX_HEIGHT = 1280;
+	private static final int MAX_WIDTH = 720;
 
 	static private int mCameraId = 0;
 
@@ -89,8 +89,8 @@ public final class CameraGLView extends GLSurfaceView {
 		setEGLContextClientVersion(2);	// GLES 2.0, API >= 8
 		setRenderer(mRenderer);
 /*		// the frequency of refreshing of camera preview is at most 15 fps
-		// and RENDERMODE_WHEN_DIRTY is better to reduce power consumption
-		setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY); */
+		// and RENDERMODE_WHEN_DIRTY is better to reduce power consumption */
+		setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 	}
 
 	@Override

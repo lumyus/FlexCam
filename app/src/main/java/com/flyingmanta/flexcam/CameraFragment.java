@@ -56,8 +56,8 @@ import java.util.List;
 public class CameraFragment extends Fragment {
     private static final boolean DEBUG = false;    // TODO set false on release
     private static final String TAG = "CameraFragment";
-    private static final int MAX_HEIGHT = 1920;
-    private static final int MAX_WIDTH = 1080;
+    private static final int MAX_HEIGHT = 1280;
+    private static final int MAX_WIDTH = 720;
     List<File> parts;
     /**
      * for camera preview display
