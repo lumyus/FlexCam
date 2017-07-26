@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    buildToolsVersion '25.0.0'
 
     defaultConfig {
         applicationId "com.serenegiant.audiovideosample"
@@ -26,4 +26,6 @@ android {
 
 dependencies {
 	compile 'com.android.support:support-v4:23.2.0'
+    compile 'com.googlecode.mp4parser:isoparser:1.1.22'
+
 }

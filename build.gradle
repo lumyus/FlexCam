@@ -4,12 +4,21 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'com.android.tools.build:gradle:2.3.3'
     }
 }
 
 allprojects {
+    buildscript {
+        repositories {
+            mavenCentral()
+            maven {
+                url "http://repository-monochromeroad.forge.cloudbees.com/release/"
+            }
+        }
+    }
+
     repositories {
-        jcenter()
+        mavenCentral()
     }
 }
