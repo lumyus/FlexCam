@@ -1,4 +1,4 @@
-package com.flyingmanta.FlexCam;
+package com.flyingmanta.flexcam;
 /*
  * AudioVideoRecordingSample
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.

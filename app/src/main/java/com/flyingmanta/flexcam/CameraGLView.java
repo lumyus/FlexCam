@@ -1,4 +1,4 @@
-package com.flyingmanta.FlexCam;
+package com.flyingmanta.flexcam;
 /*
  * AudioVideoRecordingSample
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
@@ -23,15 +23,6 @@ package com.flyingmanta.FlexCam;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
-import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
 import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
@@ -51,6 +42,15 @@ import android.view.WindowManager;
 
 import com.flyingmanta.encoder.MediaVideoEncoder;
 import com.flyingmanta.glutils.GLDrawer2D;
+
+import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
 /**
  * Sub class of GLSurfaceView to display camera preview and write video frame to capturing surface
@@ -192,12 +192,14 @@ public final class CameraGLView extends GLSurfaceView {
 					SurfaceTexture.OnFrameAvailableListener {	// API >= 11
 
 		private final WeakReference<CameraGLView> mWeakParent;
+		private final float[] mStMatrix = new float[16];
+		private final float[] mMvpMatrix = new float[16];
 		private SurfaceTexture mSTexture;	// API >= 11
 		private int hTex;
 		private GLDrawer2D mDrawer;
-		private final float[] mStMatrix = new float[16];
-		private final float[] mMvpMatrix = new float[16];
 		private MediaVideoEncoder mVideoEncoder;
+		private volatile boolean requesrUpdateTex = false;
+		private boolean flip = true;
 
 		public CameraSurfaceRenderer(final CameraGLView parent) {
 			if (DEBUG) Log.v(TAG, "CameraSurfaceRenderer:");
@@ -276,8 +278,6 @@ public final class CameraGLView extends GLSurfaceView {
 			}
 		}
 
-		private volatile boolean requesrUpdateTex = false;
-		private boolean flip = true;
 		/**
 		 * drawing to GLSurface
 		 * we set renderMode to GLSurfaceView.RENDERMODE_WHEN_DIRTY,
@@ -390,6 +390,21 @@ public final class CameraGLView extends GLSurfaceView {
     		mWeakParent = new WeakReference<CameraGLView>(parent);
     	}
 
+		private static Camera.Size getClosestSupportedSize(List<Camera.Size> supportedSizes, final int requestedWidth, final int requestedHeight) {
+			return Collections.min(supportedSizes, new Comparator<Camera.Size>() {
+
+				private int diff(final Camera.Size size) {
+					return Math.abs(requestedWidth - size.width) + Math.abs(requestedHeight - size.height);
+				}
+
+				@Override
+				public int compare(final Camera.Size lhs, final Camera.Size rhs) {
+					return diff(lhs) - diff(rhs);
+				}
+			});
+
+		}
+
     	public CameraHandler getHandler() {
             synchronized (mReadyFence) {
             	try {
@@ -498,21 +513,6 @@ public final class CameraGLView extends GLSurfaceView {
 					mCamera.startPreview();
 				}
 			}
-		}
-
-		private static Camera.Size getClosestSupportedSize(List<Camera.Size> supportedSizes, final int requestedWidth, final int requestedHeight) {
-			return (Camera.Size)Collections.min(supportedSizes, new Comparator<Camera.Size>() {
-
-				private int diff(final Camera.Size size) {
-					return Math.abs(requestedWidth - size.width) + Math.abs(requestedHeight - size.height);
-				}
-
-				@Override
-				public int compare(final Camera.Size lhs, final Camera.Size rhs) {
-					return diff(lhs) - diff(rhs);
-				}
-			});
-
 		}
 
 		/**

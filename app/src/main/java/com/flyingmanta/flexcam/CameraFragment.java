@@ -1,4 +1,4 @@
-package com.flyingmanta.FlexCam;
+package com.flyingmanta.flexcam;
 /*
  * AudioVideoRecordingSample
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
@@ -23,15 +23,7 @@ package com.flyingmanta.FlexCam;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
 import android.app.Fragment;
-
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -43,29 +35,52 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-
+import com.flyingmanta.encoder.MediaAudioEncoder;
+import com.flyingmanta.encoder.MediaEncoder;
+import com.flyingmanta.encoder.MediaMuxerWrapper;
+import com.flyingmanta.encoder.MediaVideoEncoder;
 import com.googlecode.mp4parser.BasicContainer;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
-import com.flyingmanta.encoder.MediaAudioEncoder;
-import com.flyingmanta.encoder.MediaEncoder;
-import com.flyingmanta.encoder.MediaMuxerWrapper;
-import com.flyingmanta.encoder.MediaVideoEncoder;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class CameraFragment extends Fragment {
     private static final boolean DEBUG = false;    // TODO set false on release
     private static final String TAG = "CameraFragment";
     private static final int MAX_HEIGHT = 1920;
     private static final int MAX_WIDTH = 1080;
-
-
+    List<File> parts;
     /**
      * for camera preview display
      */
     private CameraGLView mCameraView;
+    /**
+     * callback methods from encoder
+     */
+    private final MediaEncoder.MediaEncoderListener mMediaEncoderListener = new MediaEncoder.MediaEncoderListener() {
+        @Override
+        public void onPrepared(final MediaEncoder encoder) {
+            if (DEBUG) Log.v(TAG, "onPrepared:encoder=" + encoder);
+            if (encoder instanceof MediaVideoEncoder)
+                mCameraView.setVideoEncoder((MediaVideoEncoder) encoder);
+        }
+
+        @Override
+        public void onStopped(final MediaEncoder encoder) {
+            if (DEBUG) Log.v(TAG, "onStopped:encoder=" + encoder);
+            if (encoder instanceof MediaVideoEncoder)
+                mCameraView.setVideoEncoder(null);
+        }
+    };
     /**
      * for scale mode display
      */
@@ -80,16 +95,32 @@ public class CameraFragment extends Fragment {
 
 
     private Button mMergeButton;
-
     private MediaMuxerWrapper mMuxer;
-
     private String OUTPUT_FILENAME = "Merged.mp4";
+    /**
+     * method when touch record button
+     */
+    private final OnClickListener mOnClickListener = new OnClickListener() {
+        @Override
+        public void onClick(final View view) {
+            switch (view.getId()) {
+                case R.id.merge_button:
+                    File mergedFile = new File(Environment.getExternalStorageDirectory(), OUTPUT_FILENAME);
+                    mergeVideo(parts, mergedFile);
+                    break;
+                case R.id.record_button:
+                    if (mMuxer == null)
+                        startRecording();
+                    else
+                        stopRecording();
+                    break;
+            }
+        }
+    };
 
     public CameraFragment() {
         // need default constructor
     }
-
-    List<File> parts;
 
     @Override
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState) {
@@ -123,30 +154,6 @@ public class CameraFragment extends Fragment {
         mCameraView.onPause();
         super.onPause();
     }
-
-    /**
-     * method when touch record button
-     */
-    private final OnClickListener mOnClickListener = new OnClickListener() {
-        @Override
-        public void onClick(final View view) {
-            switch (view.getId()) {
-                case R.id.merge_button:
-                    File mergedFile = new File(Environment.getExternalStorageDirectory(), OUTPUT_FILENAME);
-                    mergeVideo(parts, mergedFile);
-                    break;
-                case R.id.record_button:
-                    if (mMuxer == null)
-                        startRecording();
-                    else
-                        stopRecording();
-                    break;
-            }
-        }
-    };
-
-
-
 
     private void mergeVideo(List<File> parts, File outFile) {
         try {
@@ -226,23 +233,4 @@ public class CameraFragment extends Fragment {
             // you should not wait here
         }
     }
-
-    /**
-     * callback methods from encoder
-     */
-    private final MediaEncoder.MediaEncoderListener mMediaEncoderListener = new MediaEncoder.MediaEncoderListener() {
-        @Override
-        public void onPrepared(final MediaEncoder encoder) {
-            if (DEBUG) Log.v(TAG, "onPrepared:encoder=" + encoder);
-            if (encoder instanceof MediaVideoEncoder)
-                mCameraView.setVideoEncoder((MediaVideoEncoder) encoder);
-        }
-
-        @Override
-        public void onStopped(final MediaEncoder encoder) {
-            if (DEBUG) Log.v(TAG, "onStopped:encoder=" + encoder);
-            if (encoder instanceof MediaVideoEncoder)
-                mCameraView.setVideoEncoder(null);
-        }
-    };
 }
