@@ -1,6 +1,6 @@
 package com.flyingmanta.glutils;
 /*
- * AudioVideoRecordingSample
+ * FlexCam
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
  *
  * Copyright (c) 2014-2015 saki t_saki@serenegiant.com
@@ -47,61 +47,6 @@ public class EGLBase {	// API >= 17
 	private EGLContext mEglContext = EGL14.EGL_NO_CONTEXT;
 	private EGLDisplay mEglDisplay = EGL14.EGL_NO_DISPLAY;
 	private EGLContext mDefaultContext = EGL14.EGL_NO_CONTEXT;
-
-	public static class EglSurface {
-		private final EGLBase mEgl;
-		private EGLSurface mEglSurface = EGL14.EGL_NO_SURFACE;
-		private final int mWidth, mHeight;
-
-		EglSurface(final EGLBase egl, final Object surface) {
-			if (DEBUG) Log.v(TAG, "EglSurface:");
-			if (!(surface instanceof SurfaceView)
-				&& !(surface instanceof Surface)
-				&& !(surface instanceof SurfaceHolder)
-				&& !(surface instanceof SurfaceTexture))
-				throw new IllegalArgumentException("unsupported surface");
-			mEgl = egl;
-			mEglSurface = mEgl.createWindowSurface(surface);
-	        mWidth = mEgl.querySurface(mEglSurface, EGL14.EGL_WIDTH);
-	        mHeight = mEgl.querySurface(mEglSurface, EGL14.EGL_HEIGHT);
-	        if (DEBUG) Log.v(TAG, String.format("EglSurface:size(%d,%d)", mWidth, mHeight));
-		}
-
-		EglSurface(final EGLBase egl, final int width, final int height) {
-			if (DEBUG) Log.v(TAG, "EglSurface:");
-			mEgl = egl;
-			mEglSurface = mEgl.createOffscreenSurface(width, height);
-			mWidth = width;
-			mHeight = height;
-		}
-
-		public void makeCurrent() {
-			mEgl.makeCurrent(mEglSurface);
-		}
-
-		public void swap() {
-			mEgl.swap(mEglSurface);
-		}
-
-		public EGLContext getContext() {
-			return mEgl.getContext();
-		}
-
-		public void release() {
-			if (DEBUG) Log.v(TAG, "EglSurface:release:");
-			mEgl.makeDefault();
-			mEgl.destroyWindowSurface(mEglSurface);
-	        mEglSurface = EGL14.EGL_NO_SURFACE;
-		}
-
-		public int getWidth() {
-			return mWidth;
-		}
-
-		public int getHeight() {
-			return mHeight;
-		}
-	}
 
 	public EGLBase(final EGLContext shared_context, final boolean with_depth_buffer, final boolean isRecordable) {
 		if (DEBUG) Log.v(TAG, "EGLBase:");
@@ -343,5 +288,60 @@ public class EGLBase {	// API >= 17
             return null;
         }
         return configs[0];
+    }
+
+    public static class EglSurface {
+        private final EGLBase mEgl;
+        private final int mWidth, mHeight;
+        private EGLSurface mEglSurface = EGL14.EGL_NO_SURFACE;
+
+        EglSurface(final EGLBase egl, final Object surface) {
+            if (DEBUG) Log.v(TAG, "EglSurface:");
+            if (!(surface instanceof SurfaceView)
+                    && !(surface instanceof Surface)
+                    && !(surface instanceof SurfaceHolder)
+                    && !(surface instanceof SurfaceTexture))
+                throw new IllegalArgumentException("unsupported surface");
+            mEgl = egl;
+            mEglSurface = mEgl.createWindowSurface(surface);
+            mWidth = mEgl.querySurface(mEglSurface, EGL14.EGL_WIDTH);
+            mHeight = mEgl.querySurface(mEglSurface, EGL14.EGL_HEIGHT);
+            if (DEBUG) Log.v(TAG, String.format("EglSurface:size(%d,%d)", mWidth, mHeight));
+        }
+
+        EglSurface(final EGLBase egl, final int width, final int height) {
+            if (DEBUG) Log.v(TAG, "EglSurface:");
+            mEgl = egl;
+            mEglSurface = mEgl.createOffscreenSurface(width, height);
+            mWidth = width;
+            mHeight = height;
+        }
+
+        public void makeCurrent() {
+            mEgl.makeCurrent(mEglSurface);
+        }
+
+        public void swap() {
+            mEgl.swap(mEglSurface);
+        }
+
+        public EGLContext getContext() {
+            return mEgl.getContext();
+        }
+
+        public void release() {
+            if (DEBUG) Log.v(TAG, "EglSurface:release:");
+            mEgl.makeDefault();
+            mEgl.destroyWindowSurface(mEglSurface);
+            mEglSurface = EGL14.EGL_NO_SURFACE;
+        }
+
+        public int getWidth() {
+            return mWidth;
+        }
+
+        public int getHeight() {
+            return mHeight;
+        }
     }
 }

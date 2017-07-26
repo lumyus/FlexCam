@@ -1,6 +1,6 @@
 package com.flyingmanta.encoder;
 /*
- * AudioVideoRecordingSample
+ * FlexCam
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
  *
   * Copyright (c) 2014-2015 saki t_saki@serenegiant.com
@@ -23,9 +23,6 @@ package com.flyingmanta.encoder;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
@@ -35,20 +32,60 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.util.Log;
 
-public class MediaAudioEncoder extends MediaEncoder {
-	private static final boolean DEBUG = false;	// TODO set false on release
-	private static final String TAG = "MediaAudioEncoder";
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
+public class MediaAudioEncoder extends MediaEncoder {
+	public static final int SAMPLES_PER_FRAME = 1024;    // AAC, bytes/frame/channel
+	public static final int FRAMES_PER_BUFFER = 25;    // AAC, frame/buffer/sec
+	private static final boolean DEBUG = false;    // TODO set false on release
+	private static final String TAG = "MediaAudioEncoder";
 	private static final String MIME_TYPE = "audio/mp4a-latm";
     private static final int SAMPLE_RATE = 44100;	// 44.1[KHz] is only setting guaranteed to be available on all devices.
     private static final int BIT_RATE = 64000;
-	public static final int SAMPLES_PER_FRAME = 1024;	// AAC, bytes/frame/channel
-	public static final int FRAMES_PER_BUFFER = 25; 	// AAC, frame/buffer/sec
-
-    private AudioThread mAudioThread = null;
+	private static final int[] AUDIO_SOURCES = new int[]{
+			MediaRecorder.AudioSource.MIC,
+			MediaRecorder.AudioSource.DEFAULT,
+			MediaRecorder.AudioSource.CAMCORDER,
+			MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+			MediaRecorder.AudioSource.VOICE_RECOGNITION,
+	};
+	private AudioThread mAudioThread = null;
 
 	public MediaAudioEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener) {
 		super(muxer, listener);
+	}
+
+	/**
+	 * select the first codec that match a specific MIME type
+	 *
+	 * @param mimeType
+	 * @return
+	 */
+	private static final MediaCodecInfo selectAudioCodec(final String mimeType) {
+		if (DEBUG) Log.v(TAG, "selectAudioCodec:");
+
+		MediaCodecInfo result = null;
+		// get the list of available codecs
+		final int numCodecs = MediaCodecList.getCodecCount();
+		LOOP:
+		for (int i = 0; i < numCodecs; i++) {
+			final MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
+			if (!codecInfo.isEncoder()) {    // skipp decoder
+				continue;
+			}
+			final String[] types = codecInfo.getSupportedTypes();
+			for (int j = 0; j < types.length; j++) {
+				if (DEBUG) Log.i(TAG, "supportedType:" + codecInfo.getName() + ",MIME=" + types[j]);
+				if (types[j].equalsIgnoreCase(mimeType)) {
+					if (result == null) {
+						result = codecInfo;
+						break LOOP;
+					}
+				}
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -100,14 +137,6 @@ public class MediaAudioEncoder extends MediaEncoder {
 		mAudioThread = null;
 		super.release();
     }
-
-	private static final int[] AUDIO_SOURCES = new int[] {
-		MediaRecorder.AudioSource.MIC,
-		MediaRecorder.AudioSource.DEFAULT,
-		MediaRecorder.AudioSource.CAMCORDER,
-		MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-		MediaRecorder.AudioSource.VOICE_RECOGNITION,
-	};
 
 	/**
 	 * Thread to capture audio data from internal mic as uncompressed 16bit PCM data
@@ -174,36 +203,6 @@ public class MediaAudioEncoder extends MediaEncoder {
     		}
 			if (DEBUG) Log.v(TAG, "AudioThread:finished");
     	}
-    }
-
-    /**
-     * select the first codec that match a specific MIME type
-     * @param mimeType
-     * @return
-     */
-    private static final MediaCodecInfo selectAudioCodec(final String mimeType) {
-    	if (DEBUG) Log.v(TAG, "selectAudioCodec:");
-
-    	MediaCodecInfo result = null;
-    	// get the list of available codecs
-        final int numCodecs = MediaCodecList.getCodecCount();
-LOOP:	for (int i = 0; i < numCodecs; i++) {
-        	final MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
-            if (!codecInfo.isEncoder()) {	// skipp decoder
-                continue;
-            }
-            final String[] types = codecInfo.getSupportedTypes();
-            for (int j = 0; j < types.length; j++) {
-            	if (DEBUG) Log.i(TAG, "supportedType:" + codecInfo.getName() + ",MIME=" + types[j]);
-                if (types[j].equalsIgnoreCase(mimeType)) {
-                	if (result == null) {
-                		result = codecInfo;
-               			break LOOP;
-                	}
-                }
-            }
-        }
-   		return result;
     }
 
 }

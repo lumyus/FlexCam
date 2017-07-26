@@ -1,6 +1,6 @@
 package com.flyingmanta.glutils;
 /*
- * AudioVideoRecordingSample
+ * FlexCam
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
  *
  * Copyright (c) 2014-2015 saki t_saki@serenegiant.com
@@ -49,6 +49,10 @@ public final class RenderHandler implements Runnable {
 	private boolean mRequestSetEglContext;
 	private boolean mRequestRelease;
 	private int mRequestDraw;
+
+    private EGLBase mEgl;
+    private EGLBase.EglSurface mInputSurface;
+    private GLDrawer2D mDrawer;
 
 	public static final RenderHandler createHandler(final String name) {
 		if (DEBUG) Log.v(TAG, "createHandler:");
@@ -145,12 +149,6 @@ public final class RenderHandler implements Runnable {
 			}
 		}
 	}
-
-//********************************************************************************
-//********************************************************************************
-	private EGLBase mEgl;
-	private EGLBase.EglSurface mInputSurface;
-	private GLDrawer2D mDrawer;
 
 	@Override
 	public final void run() {

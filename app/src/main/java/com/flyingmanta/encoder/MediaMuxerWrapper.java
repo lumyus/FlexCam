@@ -1,6 +1,6 @@
 package com.flyingmanta.encoder;
 /*
- * AudioVideoRecordingSample
+ * FlexCam
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
  *
   * Copyright (c) 2014-2015 saki t_saki@serenegiant.com
@@ -23,13 +23,6 @@ package com.flyingmanta.encoder;
  * All files in the folder are under this Apache License, Version 2.0.
 */
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
-import java.util.GregorianCalendar;
-import java.util.Locale;
-
 import android.media.MediaCodec;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
@@ -37,15 +30,21 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.GregorianCalendar;
+import java.util.Locale;
+
 public class MediaMuxerWrapper {
 	private static final boolean DEBUG = false;	// TODO set false on release
 	private static final String TAG = "MediaMuxerWrapper";
 
 	private static final String DIR_NAME = "AVRecSample";
     private static final SimpleDateFormat mDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US);
-
-	private String mOutputPath;
 	private final MediaMuxer mMediaMuxer;	// API >= 18
+	private String mOutputPath;
 	private int mEncoderCount, mStatredCount;
 	private boolean mIsStarted;
 	private MediaEncoder mVideoEncoder, mAudioEncoder;
@@ -67,6 +66,33 @@ public class MediaMuxerWrapper {
 		mIsStarted = false;
 	}
 
+	/**
+	 * generate output file
+	 *
+	 * @param type Environment.DIRECTORY_MOVIES / Environment.DIRECTORY_DCIM etc.
+	 * @param ext  .mp4(.m4a for audio) or .png
+	 * @return return null when this app has no writing permission to external storage.
+	 */
+	public static final File getCaptureFile(final String type, final String ext) {
+		final File dir = new File(Environment.getExternalStoragePublicDirectory(type), DIR_NAME);
+		Log.d(TAG, "path=" + dir.toString());
+		dir.mkdirs();
+		if (dir.canWrite()) {
+			return new File(dir, getDateTimeString() + ext);
+		}
+		return null;
+	}
+
+	/**
+	 * get current date and time as String
+	 *
+	 * @return
+	 */
+	private static final String getDateTimeString() {
+		final GregorianCalendar now = new GregorianCalendar();
+		return mDateTimeFormat.format(now.getTime());
+	}
+
 	public String getOutputPath() {
 		return mOutputPath;
 	}
@@ -85,6 +111,9 @@ public class MediaMuxerWrapper {
 			mAudioEncoder.startRecording();
 	}
 
+//**********************************************************************
+//**********************************************************************
+
 	public void stopRecording() {
 		if (mVideoEncoder != null)
 			mVideoEncoder.stopRecording();
@@ -98,8 +127,6 @@ public class MediaMuxerWrapper {
 		return mIsStarted;
 	}
 
-//**********************************************************************
-//**********************************************************************
 	/**
 	 * assign encoder to this calss. this is called from encoder.
 	 * @param encoder instance of MediaVideoEncoder or MediaAudioEncoder
@@ -148,6 +175,9 @@ public class MediaMuxerWrapper {
 		}
 	}
 
+//**********************************************************************
+//**********************************************************************
+
 	/**
 	 * assign encoder to muxer
 	 * @param format
@@ -171,32 +201,5 @@ public class MediaMuxerWrapper {
 		if (mStatredCount > 0)
 			mMediaMuxer.writeSampleData(trackIndex, byteBuf, bufferInfo);
 	}
-
-//**********************************************************************
-//**********************************************************************
-    /**
-     * generate output file
-     * @param type Environment.DIRECTORY_MOVIES / Environment.DIRECTORY_DCIM etc.
-     * @param ext .mp4(.m4a for audio) or .png
-     * @return return null when this app has no writing permission to external storage.
-     */
-    public static final File getCaptureFile(final String type, final String ext) {
-		final File dir = new File(Environment.getExternalStoragePublicDirectory(type), DIR_NAME);
-		Log.d(TAG, "path=" + dir.toString());
-		dir.mkdirs();
-        if (dir.canWrite()) {
-        	return new File(dir, getDateTimeString() + ext);
-        }
-    	return null;
-    }
-
-    /**
-     * get current date and time as String
-     * @return
-     */
-    private static final String getDateTimeString() {
-    	final GregorianCalendar now = new GregorianCalendar();
-    	return mDateTimeFormat.format(now.getTime());
-    }
 
 }
