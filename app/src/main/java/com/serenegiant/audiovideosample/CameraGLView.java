@@ -71,6 +71,7 @@ public final class CameraGLView extends GLSurfaceView {
 	private int mVideoWidth, mVideoHeight;
 	private int mRotation;
 
+	//
 
 	public CameraGLView(final Context context) {
 		this(context, null, 0);
