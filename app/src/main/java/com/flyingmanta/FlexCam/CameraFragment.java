@@ -1,4 +1,4 @@
-package com.serenegiant.audiovideosample;
+package com.flyingmanta.FlexCam;
 /*
  * AudioVideoRecordingSample
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
@@ -44,17 +44,16 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 
-import com.coremedia.iso.boxes.Container;
 import com.googlecode.mp4parser.BasicContainer;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
-import com.serenegiant.encoder.MediaAudioEncoder;
-import com.serenegiant.encoder.MediaEncoder;
-import com.serenegiant.encoder.MediaMuxerWrapper;
-import com.serenegiant.encoder.MediaVideoEncoder;
+import com.flyingmanta.encoder.MediaAudioEncoder;
+import com.flyingmanta.encoder.MediaEncoder;
+import com.flyingmanta.encoder.MediaMuxerWrapper;
+import com.flyingmanta.encoder.MediaVideoEncoder;
 
 public class CameraFragment extends Fragment {
     private static final boolean DEBUG = false;    // TODO set false on release

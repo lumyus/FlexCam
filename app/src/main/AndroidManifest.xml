@@ -25,7 +25,7 @@
 */
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.serenegiant.audiovideosample" >
+	package="com.flyingmanta.FlexCam" >
 
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.CAMERA"/>
@@ -45,7 +45,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.serenegiant.audiovideosample.MainActivity"
+            android:name="com.flyingmanta.FlexCam.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

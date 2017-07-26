@@ -1,4 +1,4 @@
-package com.serenegiant.audiovideosample;
+package com.flyingmanta.FlexCam;
 /*
  * AudioVideoRecordingSample
  * Sample project to cature audio and video from internal mic/camera and save as MPEG4 file.
@@ -49,8 +49,8 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.WindowManager;
 
-import com.serenegiant.encoder.MediaVideoEncoder;
-import com.serenegiant.glutils.GLDrawer2D;
+import com.flyingmanta.encoder.MediaVideoEncoder;
+import com.flyingmanta.glutils.GLDrawer2D;
 
 /**
  * Sub class of GLSurfaceView to display camera preview and write video frame to capturing surface
