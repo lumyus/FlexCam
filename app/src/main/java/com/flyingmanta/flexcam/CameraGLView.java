@@ -522,6 +522,7 @@ public final class CameraGLView extends GLSurfaceView {
 					// rotate camera preview according to the device orientation
 					setRotation(params);
 					mCamera.setParameters(params);
+
 					// get the actual preview size
 					final Camera.Size previewSize = mCamera.getParameters().getPreviewSize();
 					Log.i(TAG, String.format("previewSize(%d, %d)", previewSize.width, previewSize.height));

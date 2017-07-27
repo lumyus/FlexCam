@@ -25,7 +25,13 @@ android {
 }
 
 dependencies {
-	compile 'com.android.support:support-v4:23.2.0'
+    compile 'com.android.support:support-v4:23.2.0'
     compile 'com.googlecode.mp4parser:isoparser:1.1.22'
+    compile 'com.writingminds:FFmpegAndroid:0.3.2'
+}
 
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
 }
