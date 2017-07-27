@@ -45,6 +45,7 @@ import com.flyingmanta.glutils.GLDrawer2D;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -64,6 +65,8 @@ public final class CameraGLView extends GLSurfaceView {
 	private static final int MAX_WIDTH = 720;
 
 	static private int mCameraId = 0;
+
+	private List<CameraSetting> cameraSettings = new ArrayList<>();
 
 	private static final int SCALE_CROP_CENTER = 3;
 
@@ -135,12 +138,12 @@ public final class CameraGLView extends GLSurfaceView {
 		});
 	}
 
-	public static int getmCameraId() {
-		return mCameraId;
+	public List<CameraSetting> getCameraSettings() {
+		return cameraSettings;
 	}
 
-	public static void setCameraId(int mCameraId) {
-		CameraGLView.mCameraId = mCameraId;
+	public void setCameraSettings(List<CameraSetting> cameraSettings) {
+		this.cameraSettings = cameraSettings;
 	}
 
 	public int getVideoWidth() {
@@ -519,6 +522,15 @@ public final class CameraGLView extends GLSurfaceView {
 					final Camera.Size pictureSize = getClosestSupportedSize(
 						params.getSupportedPictureSizes(), width, height);
 					params.setPictureSize(pictureSize.width, pictureSize.height);
+
+					CameraSetting cameraSetting = new CameraSetting();
+					cameraSetting.cameraId = mCameraId;
+					cameraSetting.pictureSize = pictureSize;
+
+					if(parent.getCameraSettings().size() < 2){
+						parent.getCameraSettings().add(cameraSetting);
+					}
+
 					// rotate camera preview according to the device orientation
 					setRotation(params);
 					mCamera.setParameters(params);

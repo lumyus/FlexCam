@@ -31,15 +31,18 @@ import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
-import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
-import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
-import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
-import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
+import java.util.List;
 
-public class MainActivity extends Activity {
 
-    FFmpeg ffmpeg;
+    interface RecorderStateListener {
+        void onMerged(List parts, String fullMovieName);
+    }
+
+    public class MainActivity extends Activity implements RecorderStateListener {
+
+
+    static public RecorderStateListener recorderStateListener;
+
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -52,64 +55,25 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
+        recorderStateListener = this;
+
+
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
                     .add(R.id.container, new CameraFragment()).commit();
         }
 
-        loadFFmpeg();
 
 
 
-        try {
-            // to execute "ffmpeg -version" command you just need to pass "-version"
-            String[] cmd = {"-version"};
-            ffmpeg.execute(cmd, new ExecuteBinaryResponseHandler() {
-
-                @Override
-                public void onStart() {}
-
-                @Override
-                public void onProgress(String message) {}
-
-                @Override
-                public void onFailure(String message) {}
-
-                @Override
-                public void onSuccess(String message) {
-                    Log.v("FFmpeg",message);
-                }
-
-                public void onFinish() {}
-            });
-        } catch (FFmpegCommandAlreadyRunningException e) {
-            // Handle if FFmpeg is already running
-        }
 
     }
 
-    private void loadFFmpeg() {
-        ffmpeg = FFmpeg.getInstance(getApplicationContext());
-
-        try {
-            ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
-
-                @Override
-                public void onStart() {}
-
-                @Override
-                public void onFailure() {}
-
-                @Override
-                public void onSuccess() {}
-
-                @Override
-                public void onFinish() {}
-            });
-        } catch (FFmpegNotSupportedException e) {
-            // Handle if FFmpeg is not supported by device
+        @Override
+        public void onMerged(List parts, String fullMovieName) {
+            Log.v("FFmpeg",fullMovieName);
         }
-    }
+
 
 
 
