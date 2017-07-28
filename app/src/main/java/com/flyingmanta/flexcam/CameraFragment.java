@@ -33,7 +33,6 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.TextView;
 
 import com.flyingmanta.encoder.MediaAudioEncoder;
 import com.flyingmanta.encoder.MediaEncoder;
@@ -57,8 +56,11 @@ public class CameraFragment extends Fragment {
     private static final boolean DEBUG = false;    // TODO set false on release
     private static final String TAG = "CameraFragment";
     private static final int MAX_HEIGHT = 1280;
-    private static final int MAX_WIDTH = 720;
-    List<File> parts;
+    private static final int MAX_WIDTH = 780;
+    List<File> parts = new ArrayList<>();
+
+    int cameraId = 1;
+    View rootView;
     /**
      * for camera preview display
      */
@@ -82,10 +84,6 @@ public class CameraFragment extends Fragment {
         }
     };
     /**
-     * for scale mode display
-     */
-    private TextView mScaleModeView;
-    /**
      * button for start/stop recording
      */
     private ImageButton mRecordButton;
@@ -97,13 +95,8 @@ public class CameraFragment extends Fragment {
     private Button mMergeButton;
     private MediaMuxerWrapper mMuxer;
     private String OUTPUT_FILENAME = "MergedFinal.mp4";
-
     private Button mCameraButton;
-
-    int cameraId = 1;
-
-    View rootView;
-
+    private boolean frontAndBackCamEnabled;
     /**
      * method when touch record button
      */
@@ -118,9 +111,11 @@ public class CameraFragment extends Fragment {
                     }
                     break;
                 case R.id.camera_button:
-                    mCameraView.resetPreview(cameraId);
-                    if(cameraId == 0) cameraId = 1;
-                    else if(cameraId == 1) cameraId = 0;
+                    if (frontAndBackCamEnabled) {
+                        if (cameraId == 1) cameraId = 0;
+                        else if (cameraId == 0) cameraId = 1;
+                        mCameraView.resetPreview(cameraId);
+                    }
                     break;
                 case R.id.record_button:
                     if (mMuxer == null)
@@ -142,6 +137,8 @@ public class CameraFragment extends Fragment {
         mCameraView = (CameraGLView) rootView.findViewById(R.id.cameraView);
         mCameraView.setVideoSize(MAX_HEIGHT, MAX_WIDTH);
 
+        frontAndBackCamEnabled = mCameraView.isFrontAndBackCamEnabled();
+
         mCameraView.setOnClickListener(mOnClickListener);
 
         mRecordButton = (ImageButton) rootView.findViewById(R.id.record_button);
@@ -152,8 +149,6 @@ public class CameraFragment extends Fragment {
 
         mCameraButton = (Button) rootView.findViewById(R.id.camera_button);
         mCameraButton.setOnClickListener(mOnClickListener);
-
-        parts = new ArrayList<>();
 
         return rootView;
     }
@@ -173,14 +168,14 @@ public class CameraFragment extends Fragment {
         super.onPause();
     }
 
-    private void mergeVideo(List<File> parts, File outFile) {
+    private void mergeVideo(List<File> segmentList, File outFile) {
         try {
             Movie finalMovie = new Movie();
             List<Track> videoTracks = new LinkedList<>();
             List<Track> audioTracks = new LinkedList<>();
 
-            for (int i = 0; i < parts.size(); i++) {
-                String videoPath = parts.get(i).getPath();
+            for (int i = 0; i < segmentList.size(); i++) {
+                String videoPath = segmentList.get(i).getPath();
                 Movie movie = MovieCreator.build(videoPath);
 
                 for (Track t : movie.getTracks()) {
@@ -203,12 +198,12 @@ public class CameraFragment extends Fragment {
             FileOutputStream fos = new FileOutputStream(outFile);
             BasicContainer container = (BasicContainer) new DefaultMp4Builder().build(finalMovie);
             container.writeContainer(fos.getChannel());
+
         } catch (IOException e) {
             Log.e(TAG, "Merge failed", e);
         }
 
-        parts.clear();
-
+        segmentList.clear();
     }
 
     /**
@@ -247,8 +242,8 @@ public class CameraFragment extends Fragment {
         if (mMuxer != null) {
             mMuxer.stopRecording();
             parts.add(new File(mMuxer.getOutputPath(), ""));
+        }
             mMuxer = null;
             // you should not wait here
-        }
     }
 }

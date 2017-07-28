@@ -62,15 +62,11 @@ public final class CameraGLView extends GLSurfaceView {
 
 	private static final int MAX_HEIGHT = 1280;
 	private static final int MAX_WIDTH = 720;
-
-	static private int mCameraId = 0;
-
 	private static final int SCALE_CROP_CENTER = 3;
-
-	private int mScaleMode = SCALE_CROP_CENTER;
-
-
+	static private int mCameraId = 1;
 	private final CameraSurfaceRenderer mRenderer;
+	CameraSetting cameraSetting = new CameraSetting();
+	private int mScaleMode = SCALE_CROP_CENTER;
 	private boolean mHasSurface;
 	private CameraHandler mCameraHandler = null;
 	private int mVideoWidth, mVideoHeight;
@@ -133,14 +129,6 @@ public final class CameraGLView extends GLSurfaceView {
 				mRenderer.updateViewport();
 			}
 		});
-	}
-
-	public static int getmCameraId() {
-		return mCameraId;
-	}
-
-	public static void setCameraId(int mCameraId) {
-		CameraGLView.mCameraId = mCameraId;
 	}
 
 	public int getVideoWidth() {
@@ -209,6 +197,20 @@ public final class CameraGLView extends GLSurfaceView {
 			// otherwise camera try to display on un-exist Surface and some error will occure
 			mCameraHandler.stopPreview(true);
 		}
+	}
+
+	public boolean isFrontAndBackCamEnabled() {
+		Camera mCamera = Camera.open(0);
+		Camera.Parameters params = mCamera.getParameters();
+		cameraSetting.backCameraSizeList = params.getSupportedPreviewSizes();
+		mCamera.release();
+		mCamera = Camera.open(1);
+		params = mCamera.getParameters();
+		cameraSetting.frontCameraSizeList = params.getSupportedPreviewSizes();
+		mCamera.release();
+
+		List<Camera.Size> rawRecordingSize = cameraSetting.getAllCommonSizesList();
+		return rawRecordingSize.size() > 0;
 	}
 
 	/**
@@ -511,19 +513,26 @@ public final class CameraGLView extends GLSurfaceView {
 					Log.i(TAG, String.format("fps:%d-%d", max_fps[0], max_fps[1]));
 					params.setPreviewFpsRange(max_fps[0], max_fps[1]);
 					params.setRecordingHint(true);
-					// request closest supported preview size
-					final Camera.Size closestSize = getClosestSupportedSize(
-						params.getSupportedPreviewSizes(), width, height);
-					params.setPreviewSize(closestSize.width, closestSize.height);
+
+					final Camera.Size recordingSize = getClosestSupportedSize(
+							parent.cameraSetting.getAllCommonSizesList(), width, height);
+
+					params.setPreviewSize(recordingSize.width, recordingSize.height);
+
 					// request closest picture size for an aspect ratio issue on Nexus7
 					final Camera.Size pictureSize = getClosestSupportedSize(
-						params.getSupportedPictureSizes(), width, height);
+							parent.cameraSetting.getAllCommonSizesList(), width, height);
+
 					params.setPictureSize(pictureSize.width, pictureSize.height);
+
 					// rotate camera preview according to the device orientation
 					setRotation(params);
 					mCamera.setParameters(params);
+
 					// get the actual preview size
 					final Camera.Size previewSize = mCamera.getParameters().getPreviewSize();
+
+
 					Log.i(TAG, String.format("previewSize(%d, %d)", previewSize.width, previewSize.height));
 					// adjust view size with keeping the aspect ration of camera preview.
 					// here is not a UI thread and we should request parent view to execute.

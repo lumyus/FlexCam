@@ -25,12 +25,24 @@ package com.flyingmanta.flexcam;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 
-public class MainActivity extends Activity {
+import java.util.List;
+
+
+    interface RecorderStateListener {
+        void onMerged(List parts, String fullMovieName);
+    }
+
+    public class MainActivity extends Activity implements RecorderStateListener {
+
+
+    static public RecorderStateListener recorderStateListener;
+
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -43,11 +55,27 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
+        recorderStateListener = this;
+
+
         if (savedInstanceState == null) {
             getFragmentManager().beginTransaction()
                     .add(R.id.container, new CameraFragment()).commit();
         }
+
+
+
+
+
     }
+
+        @Override
+        public void onMerged(List parts, String fullMovieName) {
+            Log.v("FFmpeg",fullMovieName);
+        }
+
+
+
 
     @Override
     public boolean onCreateOptionsMenu(final Menu menu) {
