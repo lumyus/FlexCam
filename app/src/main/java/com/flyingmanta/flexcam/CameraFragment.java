@@ -33,17 +33,11 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.TextView;
 
 import com.flyingmanta.encoder.MediaAudioEncoder;
 import com.flyingmanta.encoder.MediaEncoder;
 import com.flyingmanta.encoder.MediaMuxerWrapper;
 import com.flyingmanta.encoder.MediaVideoEncoder;
-import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
-import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
-import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
-import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
-import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
 import com.googlecode.mp4parser.BasicContainer;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
@@ -58,17 +52,13 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import static android.R.attr.height;
-import static android.R.attr.width;
-
 public class CameraFragment extends Fragment {
     private static final boolean DEBUG = false;    // TODO set false on release
     private static final String TAG = "CameraFragment";
     private static final int MAX_HEIGHT = 1280;
     private static final int MAX_WIDTH = 780;
-    List<File> parts;
+    List<File> parts = new ArrayList<>();
 
-    FFmpeg ffmpeg;
     int cameraId = 1;
     View rootView;
     /**
@@ -93,10 +83,6 @@ public class CameraFragment extends Fragment {
                 mCameraView.setVideoEncoder(null);
         }
     };
-    /**
-     * for scale mode display
-     */
-    private TextView mScaleModeView;
     /**
      * button for start/stop recording
      */
@@ -164,10 +150,6 @@ public class CameraFragment extends Fragment {
         mCameraButton = (Button) rootView.findViewById(R.id.camera_button);
         mCameraButton.setOnClickListener(mOnClickListener);
 
-        // loadFFmpeg();
-
-        parts = new ArrayList<>();
-
         return rootView;
     }
 
@@ -186,14 +168,14 @@ public class CameraFragment extends Fragment {
         super.onPause();
     }
 
-    private void mergeVideo(List<File> parts, File outFile) {
+    private void mergeVideo(List<File> segmentList, File outFile) {
         try {
             Movie finalMovie = new Movie();
             List<Track> videoTracks = new LinkedList<>();
             List<Track> audioTracks = new LinkedList<>();
 
-            for (int i = 0; i < parts.size(); i++) {
-                String videoPath = parts.get(i).getPath();
+            for (int i = 0; i < segmentList.size(); i++) {
+                String videoPath = segmentList.get(i).getPath();
                 Movie movie = MovieCreator.build(videoPath);
 
                 for (Track t : movie.getTracks()) {
@@ -221,7 +203,7 @@ public class CameraFragment extends Fragment {
             Log.e(TAG, "Merge failed", e);
         }
 
-        parts.clear();
+        segmentList.clear();
     }
 
     /**
@@ -259,130 +241,9 @@ public class CameraFragment extends Fragment {
         mRecordButton.setColorFilter(0);    // return to default color
         if (mMuxer != null) {
             mMuxer.stopRecording();
-
             parts.add(new File(mMuxer.getOutputPath(), ""));
         }
-
             mMuxer = null;
             // you should not wait here
-        }
-
-
-    private File runFFmpegCommand(int i, File input_video) {
-
-        String output_video = Environment.getExternalStorageDirectory().getAbsolutePath()
-                + "/" + "croppedFile"+ i+".mp4";
-
-        deleteFileIfExisting(output_video);
-
-        // String width = String.valueOf(mCameraView.getCameraSettings().get(1).previewSize.width);
-        // String height =  String.valueOf(mCameraView.getCameraSettings().get(1).previewSize.height);
-
-
-
-        try {
-            String scalestring = "scale=" + height + ":" + width;
-
-            String[] cmd;
-            if (cameraId == 0) {
-                cmd = new String[]{"-i", input_video.getAbsolutePath(), "-vf", scalestring, "-preset", "ultrafast", output_video};
-
-            ffmpeg.execute(cmd, new ExecuteBinaryResponseHandler() {
-
-                @Override
-                public void onStart() {
-                    mMergeButton.setEnabled(false);
-                }
-
-                @Override
-                public void onProgress(String message) {
-                    Log.v("FFmpeg",message);
-                }
-
-                @Override
-                public void onFailure(String message) {
-                    Log.e("FFmpeg",message);
-                }
-
-                @Override
-                public void onSuccess(String message) {
-                    mMergeButton.setEnabled(true);
-                }
-            });
-            } else {
-                parts.add(new File(mMuxer.getOutputPath(), ""));
-            }
-        } catch (FFmpegCommandAlreadyRunningException e) {
-            // Handle if FFmpeg is already running
-        }
-        return new File(output_video);
     }
-
-    private void deleteFileIfExisting(String fileName){
-        File myFile = new File(fileName);
-        if(myFile.exists())
-            myFile.delete();
-    }
-
-    private void loadFFmpeg() {
-        ffmpeg = FFmpeg.getInstance(getActivity());
-
-        try {
-            ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
-
-                @Override
-                public void onStart() {}
-
-                @Override
-                public void onFailure() {}
-
-                @Override
-                public void onSuccess() {}
-
-                @Override
-                public void onFinish() {}
-            });
-        } catch (FFmpegNotSupportedException e) {
-            // Handle if FFmpeg is not supported by device
-        }
-    }
-
-/*
- try {
-            // to execute "ffmpeg -version" command you just need to pass "-version"
-
-            String input_video = Environment.getExternalStorageDirectory().getAbsolutePath()
-                    + "/" + "camfile"+ i".mp4";
-
-            String output_video = Environment.getExternalStorageDirectory().getAbsolutePath()
-                    + "/" + "CroppedFinal.mp4";
-
-            deleteFileIfExisting(output_video);
-
-            String[] cmd = {"-i", input_video, "-vf", "crop=100:100", output_video};
-            ffmpeg.execute(cmd, new ExecuteBinaryResponseHandler() {
-
-                @Override
-                public void onStart() {}
-
-                @Override
-                public void onProgress(String message) {
-                    Log.v("FFmpeg",message);
-                }
-
-                @Override
-                public void onFailure(String message) {
-                    Log.e("FFmpeg",message);
-                }
-
-                @Override
-                public void onSuccess(String message) {
-                    Log.v("FFmpeg",message);
-                }
-            });
-        } catch (FFmpegCommandAlreadyRunningException e) {
-            // Handle if FFmpeg is already running
-        }
- */
-
 }

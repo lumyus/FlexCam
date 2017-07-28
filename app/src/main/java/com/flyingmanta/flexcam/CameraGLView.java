@@ -131,14 +131,6 @@ public final class CameraGLView extends GLSurfaceView {
 		});
 	}
 
-	public CameraSetting getCameraSetting() {
-		return cameraSetting;
-	}
-
-	public void setCameraSetting(CameraSetting cameraSetting) {
-		this.cameraSetting = cameraSetting;
-	}
-
 	public int getVideoWidth() {
 		return mVideoWidth;
 	}
@@ -217,7 +209,7 @@ public final class CameraGLView extends GLSurfaceView {
 		cameraSetting.frontCameraSizeList = params.getSupportedPreviewSizes();
 		mCamera.release();
 
-		List<Camera.Size> rawRecordingSize = cameraSetting.determineCommonSizeList();
+		List<Camera.Size> rawRecordingSize = cameraSetting.getAllCommonSizesList();
 		return rawRecordingSize.size() > 0;
 	}
 
@@ -523,13 +515,13 @@ public final class CameraGLView extends GLSurfaceView {
 					params.setRecordingHint(true);
 
 					final Camera.Size recordingSize = getClosestSupportedSize(
-							parent.cameraSetting.determineCommonSizeList(), width, height);
+							parent.cameraSetting.getAllCommonSizesList(), width, height);
 
 					params.setPreviewSize(recordingSize.width, recordingSize.height);
 
 					// request closest picture size for an aspect ratio issue on Nexus7
 					final Camera.Size pictureSize = getClosestSupportedSize(
-						params.getSupportedPictureSizes(), width, height);
+							parent.cameraSetting.getAllCommonSizesList(), width, height);
 
 					params.setPictureSize(pictureSize.width, pictureSize.height);
 

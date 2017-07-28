@@ -28,6 +28,7 @@
     android:id="@+id/RelativeLayout1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:screenOrientation="portrait"
 	tools:context="com.flyingmanta.flexcam.CameraFragment">
 
 	<com.flyingmanta.flexcam.CameraGLView
