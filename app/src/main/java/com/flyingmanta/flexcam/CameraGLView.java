@@ -90,7 +90,6 @@ public final class CameraGLView extends GLSurfaceView {
 		setRenderer(mRenderer);
 /*		// the frequency of refreshing of camera preview is at most 15 fps
 		// and RENDERMODE_WHEN_DIRTY is better to reduce power consumption */
-		setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
 	}
 
 	@Override
@@ -302,16 +301,25 @@ public final class CameraGLView extends GLSurfaceView {
 				final double view_aspect = view_width / (double)view_height;
 				Log.i(TAG, String.format("view(%d,%d)%f,video(%1.0f,%1.0f)", view_width, view_height, view_aspect, video_width, video_height));
 
-				final double scale_x = view_width / video_width;
-				final double scale_y = view_height / video_height;
-				final double scale = (parent.mScaleMode == SCALE_CROP_CENTER
-						? Math.max(scale_x,  scale_y) : Math.min(scale_x, scale_y));
-				final double width = scale * video_width;
-				final double height = scale * video_height;
-				Log.v(TAG, String.format("size(%1.0f,%1.0f),scale(%f,%f),mat(%f,%f)",
-						width, height, scale_x, scale_y, width / view_width, height / view_height));
-				Matrix.scaleM(mMvpMatrix, 0, (float)(width / view_width), (float)(height / view_height), 1.0f);
-
+				final double req = video_width / video_height;
+				int x, y;
+				int width, height;
+				if (view_aspect > req) {
+					// if view is wider than camera image, calc width of drawing area based on view height
+					y = 0;
+					height = view_height;
+					width = (int) (req * view_height);
+					x = (view_width - width) / 2;
+				} else {
+					// if view is higher than camera image, calc height of drawing area based on view width
+					x = 0;
+					width = view_width;
+					height = (int) (view_width / req);
+					y = (view_height - height) / 2;
+				}
+				// set viewport to draw keeping aspect ration of camera image
+				if (DEBUG) Log.v(TAG, String.format("xy(%d,%d),size(%d,%d)", x, y, width, height));
+				GLES20.glViewport(x, y, width, height);
 
 				if (mDrawer != null)
 					mDrawer.setMatrix(mMvpMatrix, 0);
