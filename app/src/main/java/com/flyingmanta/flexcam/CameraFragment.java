@@ -58,14 +58,19 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import static android.R.attr.height;
+import static android.R.attr.width;
+
 public class CameraFragment extends Fragment {
     private static final boolean DEBUG = false;    // TODO set false on release
     private static final String TAG = "CameraFragment";
     private static final int MAX_HEIGHT = 1280;
-    private static final int MAX_WIDTH = 720;
+    private static final int MAX_WIDTH = 780;
     List<File> parts;
 
     FFmpeg ffmpeg;
+    int cameraId = 1;
+    View rootView;
     /**
      * for camera preview display
      */
@@ -104,13 +109,8 @@ public class CameraFragment extends Fragment {
     private Button mMergeButton;
     private MediaMuxerWrapper mMuxer;
     private String OUTPUT_FILENAME = "MergedFinal.mp4";
-
     private Button mCameraButton;
-
-    int cameraId = 0;
-
-    View rootView;
-
+    private boolean frontAndBackCamEnabled;
     /**
      * method when touch record button
      */
@@ -125,9 +125,11 @@ public class CameraFragment extends Fragment {
                     }
                     break;
                 case R.id.camera_button:
-                    if(cameraId == 0) cameraId = 1;
-                    else if(cameraId == 1) cameraId = 0;
-                    mCameraView.resetPreview(cameraId);
+                    if (frontAndBackCamEnabled) {
+                        if (cameraId == 1) cameraId = 0;
+                        else if (cameraId == 0) cameraId = 1;
+                        mCameraView.resetPreview(cameraId);
+                    }
                     break;
                 case R.id.record_button:
                     if (mMuxer == null)
@@ -149,6 +151,8 @@ public class CameraFragment extends Fragment {
         mCameraView = (CameraGLView) rootView.findViewById(R.id.cameraView);
         mCameraView.setVideoSize(MAX_HEIGHT, MAX_WIDTH);
 
+        frontAndBackCamEnabled = mCameraView.isFrontAndBackCamEnabled();
+
         mCameraView.setOnClickListener(mOnClickListener);
 
         mRecordButton = (ImageButton) rootView.findViewById(R.id.record_button);
@@ -160,7 +164,7 @@ public class CameraFragment extends Fragment {
         mCameraButton = (Button) rootView.findViewById(R.id.camera_button);
         mCameraButton.setOnClickListener(mOnClickListener);
 
-        loadFFmpeg();
+        // loadFFmpeg();
 
         parts = new ArrayList<>();
 
@@ -212,6 +216,7 @@ public class CameraFragment extends Fragment {
             FileOutputStream fos = new FileOutputStream(outFile);
             BasicContainer container = (BasicContainer) new DefaultMp4Builder().build(finalMovie);
             container.writeContainer(fos.getChannel());
+
         } catch (IOException e) {
             Log.e(TAG, "Merge failed", e);
         }
@@ -254,14 +259,8 @@ public class CameraFragment extends Fragment {
         mRecordButton.setColorFilter(0);    // return to default color
         if (mMuxer != null) {
             mMuxer.stopRecording();
-            //send file into ffmpeg
 
-
-            if(cameraId == 0 && mCameraView.getCameraSettings().size() == 2){
-                    parts.add(runFFmpegCommand(parts.size(), new File(mMuxer.getOutputPath(), "")));
-                }else{
-                parts.add(new File(mMuxer.getOutputPath(), ""));
-            }
+            parts.add(new File(mMuxer.getOutputPath(), ""));
         }
 
             mMuxer = null;
@@ -276,15 +275,18 @@ public class CameraFragment extends Fragment {
 
         deleteFileIfExisting(output_video);
 
-        String width = String.valueOf(mCameraView.getCameraSettings().get(1).pictureSize.width);
-        String height =  String.valueOf(mCameraView.getCameraSettings().get(1).pictureSize.height);
+        // String width = String.valueOf(mCameraView.getCameraSettings().get(1).previewSize.width);
+        // String height =  String.valueOf(mCameraView.getCameraSettings().get(1).previewSize.height);
 
 
 
         try {
-            String cropstring = "crop="+ width+ ":"+ height;
+            String scalestring = "scale=" + height + ":" + width;
 
-            String[] cmd = {"-i", input_video.getAbsolutePath(), "-vf",cropstring , output_video};
+            String[] cmd;
+            if (cameraId == 0) {
+                cmd = new String[]{"-i", input_video.getAbsolutePath(), "-vf", scalestring, "-preset", "ultrafast", output_video};
+
             ffmpeg.execute(cmd, new ExecuteBinaryResponseHandler() {
 
                 @Override
@@ -307,6 +309,9 @@ public class CameraFragment extends Fragment {
                     mMergeButton.setEnabled(true);
                 }
             });
+            } else {
+                parts.add(new File(mMuxer.getOutputPath(), ""));
+            }
         } catch (FFmpegCommandAlreadyRunningException e) {
             // Handle if FFmpeg is already running
         }
