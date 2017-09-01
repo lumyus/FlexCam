@@ -138,7 +138,7 @@ public class MediaMuxerWrapper {
 			mVideoEncoder = encoder;
 		} else if (encoder instanceof MediaAudioEncoder) {
 			if (mAudioEncoder != null)
-				throw new IllegalArgumentException("Video encoder already added.");
+				throw new IllegalArgumentException("Audio encoder already added.");
 			mAudioEncoder = encoder;
 		} else
 			throw new IllegalArgumentException("unsupported encoder");
@@ -202,4 +202,7 @@ public class MediaMuxerWrapper {
 			mMediaMuxer.writeSampleData(trackIndex, byteBuf, bufferInfo);
 	}
 
+	public int getStatredCount() {
+		return mStatredCount;
+	}
 }

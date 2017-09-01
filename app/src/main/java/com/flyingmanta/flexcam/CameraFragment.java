@@ -26,6 +26,7 @@ package com.flyingmanta.flexcam;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,7 +34,9 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
+import com.daimajia.numberprogressbar.NumberProgressBar;
 import com.flyingmanta.encoder.MediaAudioEncoder;
 import com.flyingmanta.encoder.MediaEncoder;
 import com.flyingmanta.encoder.MediaMuxerWrapper;
@@ -51,6 +54,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class CameraFragment extends Fragment {
     private static final boolean DEBUG = false;    // TODO set false on release
@@ -69,6 +74,7 @@ public class CameraFragment extends Fragment {
      * callback methods from encoder
      */
     private final MediaEncoder.MediaEncoderListener mMediaEncoderListener = new MediaEncoder.MediaEncoderListener() {
+
         @Override
         public void onPrepared(final MediaEncoder encoder) {
             if (DEBUG) Log.v(TAG, "onPrepared:encoder=" + encoder);
@@ -83,6 +89,92 @@ public class CameraFragment extends Fragment {
                 mCameraView.setVideoEncoder(null);
         }
     };
+
+    private double timeMax = 7; //maximum time
+    private double startingTime = 0;
+    private double totalTimePassedMsNew;
+    private double totalTimePassedMsOld;
+    private double totalTimePassedMs;
+    private double legacyTime = 0;
+
+    Timer timer;
+
+
+
+    private void showProgressTime(){
+        timer = new Timer();
+        timer.schedule(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                Log.d("Progress", String.valueOf(totalTimePassedMs));
+
+                if(legacyTime != 0) totalTimePassedMs += legacyTime;
+
+                totalTimePassedMsNew = ((System.nanoTime() / 1000L)-startingTime)/1000000;
+                totalTimePassedMs = (totalTimePassedMsNew-totalTimePassedMsOld)+totalTimePassedMs;
+                totalTimePassedMsOld=totalTimePassedMs;
+
+                if((totalTimePassedMs/timeMax)*100 >= 100){
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            stopRecording();
+                            numberProgressBar.setProgress(100);
+                            resetTime();
+                            resetProgressBar();
+                        }
+                    });
+
+                    cancel();
+                }{
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        numberProgressBar.setProgress((int) ((totalTimePassedMs/timeMax)*100));
+                    }
+                });
+                }
+            }
+        }, 0, 50);
+
+    }
+
+    private void resetProgressBar() {
+        numberProgressBar.setProgress(0);
+    }
+
+    private void resetTime() {
+        totalTimePassedMs = 0;
+        totalTimePassedMsNew = 0;
+        totalTimePassedMsOld = 0;
+        legacyTime = 0;
+    }
+
+
+    private final  MediaEncoder.TimingListener mTimingListener = new MediaEncoder.TimingListener() {
+
+        @Override
+        public void onTimingStarted(MediaEncoder encoder, long startTime) {
+            if (encoder instanceof MediaAudioEncoder){
+                Log.d("Timing", "StartTime: "+startTime);
+                startingTime = startTime;
+                showProgressTime();
+            }
+        }
+
+        @Override
+        public void onTimingStopped(MediaEncoder encoder, long endTime) {
+            if (encoder instanceof MediaAudioEncoder){
+                Log.d("Timing", "EndTime: "+endTime);
+                legacyTime = totalTimePassedMs;
+                timer.cancel();
+                timer.purge();
+            }
+        }
+    };
+
     /**
      * button for start/stop recording
      */
@@ -96,6 +188,7 @@ public class CameraFragment extends Fragment {
     private MediaMuxerWrapper mMuxer;
     private String OUTPUT_FILENAME = "MergedFinal.mp4";
     private Button mCameraButton;
+    private NumberProgressBar numberProgressBar;
     private boolean frontAndBackCamEnabled;
     /**
      * method when touch record button
@@ -106,6 +199,8 @@ public class CameraFragment extends Fragment {
             switch (view.getId()) {
                 case R.id.merge_button:
                     if(!parts.isEmpty()){
+                        resetTime();
+                        resetProgressBar();
                         File mergedFile = new File(Environment.getExternalStorageDirectory(), OUTPUT_FILENAME);
                         mergeVideo(parts, mergedFile);
                     }
@@ -149,6 +244,8 @@ public class CameraFragment extends Fragment {
 
         mCameraButton = (Button) rootView.findViewById(R.id.camera_button);
         mCameraButton.setOnClickListener(mOnClickListener);
+
+        numberProgressBar = (NumberProgressBar) rootView.findViewById(R.id.number_progress_bar);
 
         return rootView;
     }
@@ -219,11 +316,11 @@ public class CameraFragment extends Fragment {
             mMuxer = new MediaMuxerWrapper(".mp4");    // if you record audio only, ".m4a" is also OK.
             if (true) {
                 // for video capturing
-                new MediaVideoEncoder(mMuxer, mMediaEncoderListener, mCameraView.getVideoWidth(), mCameraView.getVideoHeight());
+                new MediaVideoEncoder(mMuxer, mMediaEncoderListener, mTimingListener, mCameraView.getVideoWidth(), mCameraView.getVideoHeight());
             }
             if (true) {
                 // for audio capturing
-                new MediaAudioEncoder(mMuxer, mMediaEncoderListener);
+                new MediaAudioEncoder(mMuxer, mMediaEncoderListener, mTimingListener);
             }
             mMuxer.prepare();
             mMuxer.startRecording();

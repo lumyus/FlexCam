@@ -43,6 +43,7 @@ public abstract class MediaEncoder implements Runnable {
 	 */
 	protected final WeakReference<MediaMuxerWrapper> mWeakMuxer;
 	protected final MediaEncoderListener mListener;
+	protected final TimingListener mTimingListener;
 	/**
 	 * Flag that indicate this encoder is capturing now.
 	 */
@@ -80,12 +81,16 @@ public abstract class MediaEncoder implements Runnable {
 	 */
 	private long prevOutputPTSUs = 0;
 
-    public MediaEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener) {
+
+	public MediaEncoder(final MediaMuxerWrapper muxer, final MediaEncoderListener listener, final TimingListener timingListener) {
     	if (listener == null) throw new NullPointerException("MediaEncoderListener is null");
+		if (timingListener == null) throw new NullPointerException("timingListener is null");
     	if (muxer == null) throw new NullPointerException("MediaMuxerWrapper is null");
 		mWeakMuxer = new WeakReference<MediaMuxerWrapper>(muxer);
 		muxer.addEncoder(this);
 		mListener = listener;
+		mTimingListener = timingListener;
+
         synchronized (mSync) {
             // create BufferInfo here for effectiveness(to reduce GC)
             mBufferInfo = new MediaCodec.BufferInfo();
@@ -360,6 +365,13 @@ LOOP:	while (mIsCapturing) {
                     }
                     // write encoded data to muxer(need to adjust presentationTimeUs.
                    	mBufferInfo.presentationTimeUs = getPTSUs();
+
+                    if(startTime == 0){
+                    	startTime = mBufferInfo.presentationTimeUs;
+						this.mTimingListener.onTimingStarted(this, startTime);
+					}
+
+
                    	muxer.writeSampleData(mTrackIndex, encodedData, mBufferInfo);
 					prevOutputPTSUs = mBufferInfo.presentationTimeUs;
                 }
@@ -367,7 +379,11 @@ LOOP:	while (mIsCapturing) {
                 mMediaCodec.releaseOutputBuffer(encoderStatus, false);
                 if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                 	// when EOS come.
+					if(endTime == 0) endTime = mBufferInfo.presentationTimeUs;
+					this.mTimingListener.onTimingStopped(this, endTime);
+
                		mIsCapturing = false;
+
                     break;      // out of while
                 }
             }
@@ -388,9 +404,19 @@ LOOP:	while (mIsCapturing) {
 	}
 
 	public interface MediaEncoderListener {
+
 		public void onPrepared(MediaEncoder encoder);
 
 		public void onStopped(MediaEncoder encoder);
+	}
+
+	private long startTime = 0;
+	private long endTime = 0;
+
+	public interface TimingListener {
+		public void onTimingStarted(MediaEncoder encoder, long startTime);
+
+		public void onTimingStopped(MediaEncoder encoder, long endTime);
 	}
 
 }
