@@ -1,6 +1,10 @@
 FlexCam
 =========================
 
+New Features: Combine multiple video recordings. (Click Merge)
+              Change front/back camera
+              Progress bar of recording
+
 Simultaneous audio and video recording sample using MediaCodec/MediaMuxer
 
  * Copyright (c) 2014-2015 saki t_saki@serenegiant.com
